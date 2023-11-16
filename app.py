@@ -34,16 +34,29 @@ class User(db.Model):
 
 class Team(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(120), unique=True)
+    idTeam = db.Column(db.Integer, unique=True)
     idUser = db.Column(db.Integer, db.ForeignKey('user.id'))
+
+def addTeam(idUser, idTeam):
+    team = Team(idTeam=idTeam, idUser=idUser)
+    db.session.add(team)
+    db.session.commit()
+
+def getTeamName(idTeam):
+
+
+def getTeams(idUser):
+    teams = Team.query.filter_by(idUser=idUser).all()
+    return teams
+
 
 @app.route('/')
 def index():
     if 'google_token' in session:
         me = google.get('userinfo')
-        user = User.query.filter_by(google_id=me.data['id']).first()
+        user = User.query.filter_by(email=me.data['email']).first()
         if user is None:
-            user = User(google_id=me.data['id'], email=me.data['email'])
+            user = User(email=me.data['email'])
             db.session.add(user)
             db.session.commit()
         return 'Logged in as: ' + me.data['email']
@@ -56,7 +69,7 @@ def login():
 @app.route('/logout')
 def logout():
     session.pop('google_token', None)
-    return 'Logged out'
+    return redirect("/", code=302)
 
 @app.route('/login/authorized')
 def authorized():
@@ -67,7 +80,6 @@ def authorized():
             request.args['error_description']
         )
     session['google_token'] = (response['access_token'], '')
-    me = google.get('userinfo')
     return redirect("/", code=302)
 
 @google.tokengetter
