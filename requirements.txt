@@ -2,3 +2,5 @@ Werkzeug==2.2.2
 Flask
 Flask-OAuthlib
 Flask-SQLAlchemy
+python-dotenv
+icalendar
