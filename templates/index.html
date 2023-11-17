@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendar settings</title>
+</head>
+<body>
+
+<h2>Your Teams:</h2>
+<ul>
+    {% for team in userTeams %}
+    <li><a>{{ getTeamName(team.idTeam) }}</a> <a href="/del/{{ team.idTeam }}">Delete</a></li>
+    {% endfor %}
+</ul>
+
+<h2>Total Teams:</h2>
+<ul>
+    {% for team in otherTeams %}
+    <li><a>{{ getTeamName(team) }}</a> <a href="/add/{{ team }}">Add</a></li>
+    {% endfor %}
+</ul>
+
+<a href="{{ url_for('download_ical') }}">Download iCal Calendar</a>
+</body>
+</html>
