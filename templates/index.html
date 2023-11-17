@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendar settings</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #ffffff;
+            color: #000000;
+            margin: 0;
+            padding: 0;
+        }
+        .header {
+            background: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            width: 150px;
+            height: auto;
+        }
+        .header-links {
+            display: flex;
+            align-items: center;
+        }
+        .header-links a {
+            color: #000000;
+            margin-right: 20px;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .header-links a:hover {
+            color: #ffffff;
+        }
+        .container {
+            background: linear-gradient(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8)), /* White faded background */
+            linear-gradient(to right, #0C2340, #1D428A, #006BB6); /* Background for the content */
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        .list-group-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #1D428A;
+            color: #ffffff;
+            border: none;
+            margin-bottom: 5px;
+        }
+        .button-group button {
+            margin-right: 5px;
+        }
+
+        .list-group-item.d-none {
+            display: none !important;
+        }
+
+    </style>
+</head>
+<body>
+<div class="header">
+    <img src="static/Logo-NBA.png" alt="Logo NBA" class="logo">
+    <div class="header-links">
+        <a href="">Accueil</a>
+        <a href="/logout">Déconnexion</a>
+    </div>
+</div>
+
+<div class="container">
+    <h1 class="text-center mb-4">Liste d'Équipes</h1>
+    <input type="text" id="searchInput" class="form-control mb-4" placeholder="Rechercher une équipe..." oninput="filterTeams()">
+    <ul id="teamList" class="list-group">
+
+        {% for team in userTeams %}
+        <li class="list-group-item">
+            {{ getTeamName(team.idTeam) }}
+            <div class="button-group">
+                <a class="btn btn-danger" href="/del/{{ team.idTeam }}">Retirer</a>
+            </div>
+        </li>
+        {% endfor %}
+
+        {% for team in otherTeams %}
+        <li class="list-group-item">
+            {{ getTeamName(team) }}
+            <div class="button-group">
+                <a class="btn btn-success" href="/add/{{ team }}">Ajouter</a>
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+<script>
+    function filterTeams() {
+        var input, filter, ul, li, a, i, txtValue;
+        input = document.getElementById("searchInput");
+        filter = input.value.toUpperCase();
+        ul = document.getElementById("teamList");
+        li = ul.getElementsByClassName("list-group-item");
+
+        for (i = 0; i < li.length; i++) {
+            a = li[i];
+            txtValue = a.textContent || a.innerText;
+            if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                a.classList.remove("d-none");
+            } else {
+                a.classList.add("d-none");
+            }
+        }
+    }
+</script>
+</body>
+</html>
