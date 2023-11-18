@@ -97,6 +97,10 @@ def assignTeam(idUser, idTeam):
         team.idUser = idUser
         db.session.commit()
 
+def get_team_logo(idTeam):
+    # Supposons que les logos sont stockés dans le dossier 'static/logos/' avec des noms comme 'team1.png', 'team2.png', etc.
+    return f"static/logo/team_nba/team_{idTeam}.png"
+
 def createEvent(summary, start_time, end_time):
     event = Event()
     event.add('summary', summary)
@@ -133,8 +137,7 @@ def index():
             if (Team.query.filter_by(idUser=user.id, idTeam=i).first() is None):
                 otherTeams.append(i)
 
-        return render_template('index.html', userTeams=getTeams(user.id), otherTeams=otherTeams, getTeamName=getTeamName)
-
+        return render_template('index.html', userTeams=getTeams(user.id), otherTeams=otherTeams, getTeamName=getTeamName, getTeamLogo=get_team_logo)
 
     return redirect("/login", code=302)
 
