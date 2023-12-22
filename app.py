@@ -1,9 +1,9 @@
-from flask import Flask, redirect, url_for, session, render_template, Response
+from flask import Flask, redirect, url_for, session, render_template, Response, request
 from flask_oauthlib.client import OAuth
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from datetime import datetime, timedelta
 from icalendar import Calendar, Event
-import os
+import os, requests, pytz, hashlib
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -85,7 +85,7 @@ def deleteTeam(idTeam):
 def getTeamName(idTeam):
     return teams_dict[idTeam]
 
-def getTeams(idUser):
+def getUserTeams(idUser):
     teams = Team.query.filter_by(idUser=idUser).all()
     return teams
 
@@ -98,25 +98,63 @@ def assignTeam(idUser, idTeam):
         db.session.commit()
 
 def get_team_logo(idTeam):
-    # Supposons que les logos sont stockés dans le dossier 'static/logos/' avec des noms comme 'team1.png', 'team2.png', etc.
     return f"static/logo/team_nba/team_{idTeam}.png"
 
-def createEvent(summary, start_time, end_time):
-    event = Event()
-    event.add('summary', summary)
-    event.add('dtstart', start_time)
-    event.add('dtend', end_time)
-    return event
+def getSchedules():
+    response = requests.get("https://cdn.nba.com/static/json/staticData/scheduleLeagueV2.json")
+    matches_info = []
 
-def generateIcal(events):
+    for game_date in response.json()['leagueSchedule']['gameDates']:
+        for game in game_date['games']:
+            match_info = {
+                'gameDateTimeUTC': game['gameDateTimeUTC'],
+                'weekNumber': game['weekNumber'],
+                'arenaName': game['arenaName'],
+                'seriesText': game['seriesText'],
+                'hometeamName': game['homeTeam']['teamName'],
+                'awayteamName': game['awayTeam']['teamName'],
+                'url': game['branchLink'],
+                'arenaCity': game['arenaCity'],
+                'hometeamTricode': game['homeTeam']['teamTricode'],
+                'awayteamTricode': game['awayTeam']['teamTricode'],
+                'hometeamScore': game['homeTeam']['score'],
+                'awayteamScore': game['awayTeam']['score'],
+            }
+            matches_info.append(match_info)
+    return matches_info
+
+def getTeamMatches(idTeam):
+    result = []
+    matches_info = getSchedules()
+    for i in matches_info:
+        if (i['hometeamName'] == getTeamName(idTeam) or i['awayteamName'] == getTeamName(idTeam)):
+            result.append(i)
+    return result
+
+def getUserMatches(idUser):
+    result = []
+    teams = getUserTeams(idUser)
+    for i in teams:
+        result += getTeamMatches(i.idTeam)
+    return result
+
+def convert_to_datetime(date_str):
+    return datetime.strptime(date_str, '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=pytz.UTC)
+
+def generate_ical(events):
     cal = Calendar()
     for event_data in events:
-        event = createEvent(
-            event_data['summary'],
-            event_data['start_time'],
-            event_data['end_time']
-        )
+        event = Event()
+        print("event: ", event)
+        event.add('summary', f"{event_data['hometeamTricode']} vs {event_data['awayteamTricode']} 🏀")
+        event.add('location', f"🏟 {event_data['arenaName']}, {event_data['arenaCity']}")
+        event.add("description", f"🎖️Scores: \n{event_data['hometeamName']} {event_data['hometeamScore']} - {event_data['awayteamScore']} {event_data['awayteamName']}")
+        event.add("url", event_data['url'])
+        event.add('dtstart', datetime.strptime(event_data['gameDateTimeUTC'], '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=pytz.UTC))
+        event.add('dtend', datetime.strptime(event_data['gameDateTimeUTC'], '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=pytz.UTC) + timedelta(hours=3))
+
         cal.add_component(event)
+
     return cal.to_ical()
 
 @app.route('/')
@@ -137,7 +175,7 @@ def index():
             if (Team.query.filter_by(idUser=user.id, idTeam=i).first() is None):
                 otherTeams.append(i)
 
-        return render_template('index.html', userTeams=getTeams(user.id), otherTeams=otherTeams, getTeamName=getTeamName, getTeamLogo=get_team_logo)
+        return render_template('index.html', userTeams=getUserTeams(user.id), otherTeams=otherTeams, getTeamName=getTeamName, getTeamLogo=get_team_logo, userId=user.id)
 
     return redirect("/login", code=302)
 
@@ -169,30 +207,29 @@ def delTeamRoute(idTeam):
         return redirect("/", code=302)
     return redirect("/login", code=302)
 
-@app.route('/calendar')
-def download_ical():
-    if 'google_token' in session:
-        me = google.get('userinfo')
-        user = User.query.filter_by(email=me.data['email']).first()
-        if user is None:
-            user = User(email=me.data['email'])
-            db.session.add(user)
-            db.session.commit()
 
-        user_teams = getTeams(user.id)
+@app.route('/events/<int:user_id>')
+def api_events(user_id):
+    events = getUserMatches(user_id)
+    return render_template('events.html', events=events)
 
-        events_data = []
-        for team in user_teams:
-            team_events = parseTeamEvents(team.events)
-            events_data.extend(team_events)
+@app.route('/calendar/<int:user_id>.ics')
+def generate_ical_feed(user_id):
+    events = getUserMatches(user_id)
+    ical_content = generate_ical(events)
 
-        ical_data = generateIcal(events_data)
+    response = Response(
+        ical_content,
+        content_type='text/calendar',
+        headers={
+            'Content-Disposition': 'inline; filename=calendar.ics',
+            'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+            'Pragma': 'no-cache',
+            'Expires': '0',
+        }
+    )
 
-        response = Response(ical_data, content_type='text/calendar')
-        response.headers['Content-Disposition'] = 'inline; filename=calendar.ics'
-        return response
-
-    return redirect("/login", code=302)
+    return response
 
 @app.route('/login')
 def login():

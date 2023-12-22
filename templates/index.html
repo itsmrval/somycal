@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calendar settings</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://pro.fontawesome.com/releases/v5.10.0/css/all.css" integrity="sha384-AYmEC3Yw5cVb3ZcuHtOA93w35dYTsvhLPVnYs9eStHfGJvOvKxVfELGroGkvsg+p" crossorigin="anonymous">
+
     <style>
         body {
             background-color: #ffffff;
@@ -20,7 +22,7 @@
             align-items: center;
         }
         .logo {
-            width: 250px;
+            width: 150px;
             height: auto;
         }
         .header-links {
@@ -37,7 +39,7 @@
             color: #ffffff;
         }
         .container {
-            background: linear-gradient(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8)), grey; /* Background for the content */
+            background: linear-gradient(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8)), grey;
             padding: 20px;
             border-radius: 10px;
             margin-top: 20px;
@@ -51,7 +53,7 @@
             border: none;
             margin-bottom: 5px;
         }
-        .button-group button {
+        .button-group a {
             margin-right: 5px;
         }
 
@@ -67,38 +69,56 @@
     </style>
 </head>
 <body>
-<div class="header">
-    <img src="static/logo/logo.png" alt="Logo SC" class="logo">
-    <div class="header-links">
-        <a href="">Accueil</a>
-        <a href="/logout">Déconnexion</a>
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand" href="#">
+        <img src="static/logo/logo.png" alt="Logo SC" class="logo">
+    </a>
+    <div class="navbar-nav header-links ml-auto">
+        <a class="nav-item nav-link" href="#">Accueil</a>
+        <a class="nav-item nav-link" href="{{ url_for('generate_ical_feed', user_id=userId) }}" target="_blank">S'abonner au calendrier</a>
+        <a class="nav-item nav-link" href="/logout">Déconnexion</a>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="d-flex align-items-center mb-4">
+        <h2 class="mr-2">Equipes:</h2>&nbsp;&nbsp;&nbsp;&nbsp;
+        <input type="text" id="searchInput" class="form-control" oninput="filterTeams()">
+    </div>
+    <div class="row" id="teamList">
+        {% for team in userTeams %}
+        <div class="col-md-4 mb-3">
+            <li class="list-group-item">
+                <img src="{{ getTeamLogo(team.idTeam) }}" alt="Logo de l'équipe" class="team-logo">
+                {{ getTeamName(team.idTeam) }}
+                <div class="button-group">
+                    <a class="btn btn-danger" href="/del/{{ team.idTeam }}">Retirer</a>
+                </div>
+            </li>
+        </div>
+        {% endfor %}
+        {% for team in otherTeams %}
+        <div class="col-md-4 mb-3">
+            <li class="list-group-item">
+                <img src="{{ getTeamLogo(team) }}" alt="Logo de l'équipe" class="team-logo">
+                {{ getTeamName(team) }}
+                <div class="button-group">
+                    <a class="btn btn-success" href="/add/{{ team }}">Ajouter</a>
+                </div>
+            </li>
+        </div>
+        {% endfor %}
     </div>
 </div>
 
-<div class="container">
-    <h1 class="text-center mb-4">Liste d'Équipes</h1>
-    <input type="text" id="searchInput" class="form-control mb-4" placeholder="Rechercher une équipe..." oninput="filterTeams()">
-    <ul id="teamList" class="list-group">
-        {% for team in userTeams %}
-        <li class="list-group-item">
-            <img src="{{ getTeamLogo(team.idTeam) }}" alt="Logo de l'équipe" class="team-logo">
-            {{ getTeamName(team.idTeam) }}
-            <div class="button-group">
-                <a class="btn btn-danger" href="/del/{{ team.idTeam }}">Retirer</a>
-            </div>
-        </li>
-        {% endfor %}
-        {% for team in otherTeams %}
-        <li class="list-group-item">
-            <img src="{{ getTeamLogo(team) }}" alt="Logo de l'équipe" class="team-logo">
-            {{ getTeamName(team) }}
-            <div class="button-group">
-                <a class="btn btn-success" href="/add/{{ team }}">Ajouter</a>
-            </div>
-        </li>
-        {% endfor %}
-    </ul>
-</div>
+<footer class="footer mt-auto py-3">
+    <div class="container text-center">
+        <a href="https://github.com/itsmrval/nba-calendar" target="_blank" class="ml-3 text-muted text-decoration-none">
+            <i class="fab fa-github"></i> &copy; 2023 Sport Calendar
+        </a>
+    </div>
+</footer>
+
 
 <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
@@ -109,7 +129,7 @@
         input = document.getElementById("searchInput");
         filter = input.value.toUpperCase();
         ul = document.getElementById("teamList");
-        li = ul.getElementsByClassName("list-group-item");
+        li = ul.getElementsByClassName("col-md-4");
 
         for (i = 0; i < li.length; i++) {
             a = li[i];
@@ -122,5 +142,6 @@
         }
     }
 </script>
+
 </body>
 </html>

@@ -23,8 +23,6 @@ for game_date in data['leagueSchedule']['gameDates']:
         }
         matches_info.append(match_info)
 
-# Afficher la liste des matchs
-#print(matches_info)
 
 teams_dict = {
     1: "Lakers",
@@ -59,5 +57,6 @@ teams_dict = {
     30: "Nets"
 }
 
-# Affichage du dictionnaire
-print(teams_dict)
+for i in matches_info:
+    if (i['hometeamName'] == teams_dict[1] or i['awayteamName'] == teams_dict[1]):
+        print(i['hometeamName'] + " vs " + i['awayteamName'] + " " + i['gameDateTimeUTC'])
