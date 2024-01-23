@@ -1,5 +1,5 @@
 from flask import Flask, redirect, url_for, session, render_template, Response, request
-from flask_oauthlib.client import OAuth
+from flask_oauthlib.client import OAuth, OAuthRemoteApp
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timedelta
 from icalendar import Calendar, Event
@@ -9,7 +9,7 @@ load_dotenv()
 
 app = Flask(__name__)
 
-app.config['SECRET_KEY'] = 'fjlksjfnklsdfnsdklfnsdkjfnsdjkfnds'
+app.config['SECRET_KEY'] = os.getenv('SESSION_SECRET')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
@@ -145,7 +145,6 @@ def generate_ical(events):
     cal = Calendar()
     for event_data in events:
         event = Event()
-        print("event: ", event)
         event.add('summary', f"{event_data['hometeamTricode']} vs {event_data['awayteamTricode']} 🏀")
         event.add('location', f"🏟 {event_data['arenaName']}, {event_data['arenaCity']}")
         event.add("description", f"🎖️Scores: \n{event_data['hometeamName']} {event_data['hometeamScore']} - {event_data['awayteamScore']} {event_data['awayteamName']}")
@@ -237,7 +236,7 @@ def login():
 
 @app.route('/login/google')
 def google_redirect():
-    return google.authorize(callback=url_for('authorized', _external=True))
+    return google.authorize(callback=url_for('authorized', _external=True, _scheme='https'))
 
 @app.route('/logout')
 def logout():
@@ -263,4 +262,4 @@ if __name__ == '__main__':
     with app.app_context():
         db.create_all()
 
-    app.run(debug=True, port=5050)
+    app.run(debug=True, port=8000, host='127.0.0.1')

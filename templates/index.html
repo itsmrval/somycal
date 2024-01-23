@@ -75,7 +75,7 @@
     </a>
     <div class="navbar-nav header-links ml-auto">
         <a class="nav-item nav-link" href="#">Accueil</a>
-        <a class="nav-item nav-link" href="{{ url_for('generate_ical_feed', user_id=userId) }}" target="_blank">S'abonner au calendrier</a>
+        <a class="nav-item nav-link" href="webcal://somycal.com/calendar/{{userId}}.ics" target="_blank">S'abonner au calendrier</a>
         <a class="nav-item nav-link" href="/logout">Déconnexion</a>
     </div>
 </nav>
