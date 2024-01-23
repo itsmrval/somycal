@@ -174,9 +174,10 @@ def index():
             if (Team.query.filter_by(idUser=user.id, idTeam=i).first() is None):
                 otherTeams.append(i)
 
-        return render_template('index.html', userTeams=getUserTeams(user.id), otherTeams=otherTeams, getTeamName=getTeamName, getTeamLogo=get_team_logo, userId=user.id)
+        return render_template('dashboard.html', userTeams=getUserTeams(user.id), otherTeams=otherTeams, getTeamName=getTeamName, getTeamLogo=get_team_logo, userId=user.id)
 
-    return redirect("/login", code=302)
+
+    return render_template('index.html')
 
 @app.route('/add/<int:idTeam>')
 def addTeamRoute(idTeam):
@@ -230,12 +231,10 @@ def generate_ical_feed(user_id):
 
     return response
 
-@app.route('/login')
-def login():
-    return render_template('login.html')
-
 @app.route('/login/google')
 def google_redirect():
+    if 'instagram' in request.headers.get('User-Agent').lower() or 'facebook' in request.headers.get('User-Agent').lower():
+        return render_template('open_in_browser.html')
     return google.authorize(callback=url_for('authorized', _external=True, _scheme='https'))
 
 @app.route('/logout')
