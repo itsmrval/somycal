@@ -208,6 +208,11 @@ def delTeamRoute(idTeam):
     return redirect("/login", code=302)
 
 
+@app.route('/events/<int:user_id>')
+def api_events(user_id):
+    events = getUserMatches(user_id)
+    return render_template('events.html', events=events)
+
 @app.route('/calendar/<int:user_id>.ics')
 def generate_ical_feed(user_id):
     events = getUserMatches(user_id)
