@@ -122,18 +122,6 @@ def assignTeam(idUser, idTeam,idSport):
         team.idUser = idUser
         db.session.commit()
 
-
-def getWNBATeamMatches(idTeam):
-    result = []
-    matches_info = getWNBASchedules()
-    for i in matches_info:
-        if (i['WNBA_hometeamName'] == getTeamName(idTeam) or i['WNBA_awayteamName'] == getTeamName(idTeam)):
-            result.append(i)
-    return result
-
-
-
-
 def getTeamLogo(idTeam, idSport):
     match idSport:
         case 1:
